@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Muah RP Memory Companion</title>
+    <link rel="stylesheet" href="side-panel.css">
+  </head>
+  <body>
+    <header>
+      <div>
+        <p class="eyebrow">LOCAL MEMORY</p>
+        <h1>Muah RP Companion</h1>
+      </div>
+      <div class="header-controls">
+        <label class="mode-switch" title="On: connect only to the Muah PWA. Off: connect only to a regular browser tab.">
+          <input id="pwaMode" type="checkbox">
+          <span>PWA</span>
+        </label>
+        <span id="statusBadge" class="badge unknown">Unconfirmed</span>
+      </div>
+    </header>
+
+    <div id="targetBanner" class="target-banner warning">
+      <span id="targetBannerText">Detecting capture source…</span>
+      <button id="saveNow" class="primary top-capture" disabled>Capture now</button>
+    </div>
+
+    <main>
+      <section id="pendingImportCard" class="card pending-import hidden">
+        <p class="eyebrow">IMPORT COMPLETE · WAITING FOR BINDING</p>
+        <h2 id="pendingImportName"></h2>
+        <p id="pendingImportMeta" class="hint"></p>
+        <p id="pendingImportUuid" class="mono"></p>
+        <p id="pendingImportHint" class="hint"></p>
+        <button id="bindPendingImport" class="primary">Bind to current slot</button>
+        <button id="switchImportMode" class="hidden">Switch to archive's mode</button>
+        <button id="dismissPendingImport" class="quiet">Dismiss for now (keep archive)</button>
+      </section>
+      <section class="card slot-picker-card">
+        <div class="section-heading">
+          <h2>Current Muah slot</h2>
+          <span id="manualSlotHint">Not selected</span>
+        </div>
+        <p class="hint">Select the same number currently open in Muah. Every slot keeps completely separate chats and memories.</p>
+        <div id="slotGrid" class="slot-grid" aria-label="Select the current Muah slot">
+          <button data-slot-number="1">1</button><button data-slot-number="2">2</button>
+          <button data-slot-number="3">3</button><button data-slot-number="4">4</button>
+          <button data-slot-number="5">5</button><button data-slot-number="6">6</button>
+          <button data-slot-number="7">7</button><button data-slot-number="8">8</button>
+          <button data-slot-number="9">9</button><button data-slot-number="10">10</button>
+        </div>
+      </section>
+
+      <section class="card status-card">
+        <p id="statusDetail" class="status-detail">Waiting for the Muah page to report its slot…</p>
+        <dl>
+          <div><dt>Capture source</dt><dd id="sourcePage">—</dd></div>
+          <div><dt>Current slot</dt><dd id="slotLabel">—</dd></div>
+          <div><dt>Archive name</dt><dd id="archiveName">—</dd></div>
+          <div><dt>Archive UUID</dt><dd id="archiveUuid" class="mono">—</dd></div>
+          <div><dt>Chat entries</dt><dd id="messageCount">0</dd></div>
+          <div><dt>Last updated</dt><dd id="updatedAt">—</dd></div>
+        </dl>
+        <button id="recognizeNow">Redetect current slot</button>
+        <details class="capture-settings" open>
+          <summary>Chat capture behavior</summary>
+          <div class="capture-fields">
+            <label>Mode
+              <select id="captureMode">
+                <option value="automatic">Automatic batch capture</option>
+                <option value="manual">Manual capture only</option>
+              </select>
+            </label>
+            <label id="captureThresholdLabel">Capture after this many changes
+              <input id="captureTriggerCount" type="number" min="1" max="50" step="1" value="2">
+            </label>
+          </div>
+          <button id="saveCaptureSettings">Save capture settings</button>
+          <p class="hint capture-action-hint">The “Capture now” button always works, regardless of automatic/manual mode.</p>
+          <p id="captureStatus" class="hint capture-status">Automatic mode saves after approximately 2 changed entries by default.</p>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2>Slot and archive binding</h2>
+        <p class="hint">Select the current number above, then bind it to a local archive. One archive cannot be bound to two slots.</p>
+        <button id="initializeSlots" class="primary">Initialize slots 1–10 (one-to-one)</button>
+        <p class="hint setup-hint">Run initialization once. It creates an independent UUID for each slot.</p>
+        <label for="archiveSelect">Local archive</label>
+        <select id="archiveSelect"></select>
+        <button id="bindArchive">Bind current number to selected archive</button>
+        <div class="inline-form">
+          <input id="newArchiveName" type="text" maxlength="120" placeholder="New archive name">
+          <button id="createArchive">Create</button>
+        </div>
+      </section>
+
+      <section class="card memory-card">
+        <details class="slot-profile">
+          <summary>Core prompt for the current slot</summary>
+          <p class="hint">Strictly bound to the current archive UUID. Open Muah settings to sync it, or paste and save it manually.</p>
+          <textarea id="corePromptText" rows="8" placeholder="Paste this slot's core prompt…"></textarea>
+          <div class="button-row">
+            <button id="syncCorePrompt">Read from Muah</button>
+            <button id="saveCorePrompt" class="primary">Save to current slot</button>
+          </div>
+          <p id="corePromptStatus" class="hint">No core prompt has been saved for this slot.</p>
+        </details>
+        <div class="tabs" role="tablist" aria-label="记忆与原始聊天">
+          <button id="memoryTab" class="tab active" role="tab" aria-selected="true">Extracted memory</button>
+          <button id="recordsTab" class="tab" role="tab" aria-selected="false">Raw chat archive</button>
+        </div>
+        <div id="memoryPanel" role="tabpanel">
+          <div class="section-heading memory-heading">
+            <div>
+              <h2>Current memory</h2>
+              <p id="memoryMeta" class="hint">Not generated</p>
+            </div>
+          </div>
+          <div class="memory-operation">
+            <p id="memoryPendingStatus" class="hint">Checking pending chat entries…</p>
+            <button id="generateMemory" class="primary">Incrementally process new chat</button>
+            <progress id="memoryProgress" class="hidden" max="1" value="0"></progress>
+            <p id="memoryProgressLabel" class="hint" role="status"></p>
+            <details class="advanced-memory">
+              <summary>Advanced · Rebuild from the beginning</summary>
+              <p id="rebuildEstimate" class="hint"></p>
+              <p class="hint">Reprocesses every saved entry and may incur substantial API cost. The current memory is checkpointed first.</p>
+              <button id="rebuildMemory" class="danger-button">Rebuild memory from entry 1</button>
+            </details>
+          </div>
+          <textarea id="memoryText" class="memory-text" rows="16" readonly placeholder="After configuring an external model, this area shows the plot overview, key facts, characters, relationships, timeline, and open threads for the current slot."></textarea>
+          <div class="output-box">
+            <h2>Memory output</h2>
+            <label for="memoryOutputMode">Output mode</label>
+            <select id="memoryOutputMode">
+              <option value="compact">Default compact memory</option>
+              <option value="plot">Core plot only</option>
+              <option value="relationships">Characters and relationships only</option>
+              <option value="chronological">Chronological summary (medium detail)</option>
+            </select>
+            <button id="generateChronological" class="hidden">Generate / update chronological summary</button>
+            <p id="chronologicalStatus" class="hint hidden"></p>
+            <div class="two-columns">
+              <label>Characters per segment<input id="memorySegmentSize" type="number" min="500" max="10000" step="100" value="1800"></label>
+              <label>Current segment<select id="memorySegment"></select></label>
+            </div>
+            <textarea id="memoryOutputPreview" rows="8" readonly placeholder="After memory extraction, the selected output segment appears here."></textarea>
+          </div>
+          <div class="memory-actions three-actions">
+            <button id="copyMemory">Copy complete output</button>
+            <button id="copyMemorySegment">Copy current segment</button>
+            <button id="insertMemory" class="primary">Insert current segment</button>
+          </div>
+          <p id="memoryStatus" class="hint">Memory is strictly bound to the current archive UUID.</p>
+          <details class="memory-history">
+            <summary id="checkpointSummary">Memory history · 0 checkpoints</summary>
+            <p class="hint">Every incremental extraction saves an immutable checkpoint. Viewing history does not change current memory.</p>
+            <select id="checkpointSelect"><option value="">No checkpoints</option></select>
+            <textarea id="checkpointPreview" rows="10" readonly placeholder="Select a checkpoint to inspect the long-term memory saved at that time."></textarea>
+          </details>
+          <details class="comparison-box" id="comparisonBox">
+            <summary>Muah memory gap analysis</summary>
+            <p class="hint">Compare local memory, Muah's SYSTEM SUMMARY, and the slot's core prompt to find missing key events. Results never overwrite long-term memory.</p>
+            <label for="muahSummaryText">Current Muah SYSTEM SUMMARY</label>
+            <textarea id="muahSummaryText" rows="6" placeholder="Read it from the top of the chat, or paste the SYSTEM SUMMARY…"></textarea>
+            <div class="button-row">
+              <button id="readMuahSummary">Read from Muah</button>
+              <button id="saveMuahSummary">Save pasted summary</button>
+            </div>
+            <p id="muahSummaryMeta" class="hint"></p>
+            <label>Character budget per output<input id="comparisonBudget" type="number" min="300" max="8000" step="100" value="1800"></label>
+            <p class="hint">The core-prompt patch is limited to 700 characters. Append only facts you have confirmed.</p>
+            <button id="compareMemory" class="primary">Compare and generate supplement</button>
+            <p id="comparisonStatus" class="hint" role="status"></p>
+            <div id="comparisonReport" class="comparison-report"></div>
+            <label>Comparison output<select id="comparisonMode">
+              <option value="supplement">Missing-memory supplement only</option>
+              <option value="completedSummary">Completed combined summary</option>
+              <option value="corePatch">Short core-prompt patch</option>
+            </select></label>
+            <label>Current segment<select id="comparisonSegment"></select></label>
+            <textarea id="comparisonPreview" rows="8" readonly></textarea>
+            <p id="comparisonLength" class="hint"></p>
+            <div class="button-row">
+              <button id="copyComparison">Copy complete text</button>
+              <button id="copyComparisonSegment">Copy current segment</button>
+            </div>
+            <label class="check-row"><input id="comparisonAsContext" type="checkbox" checked>Add memory markers when copying to chat to prevent recursive capture</label>
+            <details class="comparison-history">
+              <summary>Comparison history</summary>
+              <select id="comparisonHistorySelect"></select>
+              <textarea id="comparisonHistoryPreview" rows="6" readonly></textarea>
+            </details>
+          </details>
+        </div>
+        <div id="recordsPanel" class="hidden" role="tabpanel">
+          <div class="section-heading">
+            <h2>Raw chat archive</h2>
+            <div class="compact-actions">
+              <button id="openReader" class="quiet">Read all</button>
+              <button id="refreshRecords" class="quiet">Refresh</button>
+            </div>
+          </div>
+          <p class="hint records-hint">“Read all” opens an independent reading page in saved order. It never uses AI to rewrite the transcript.</p>
+          <div id="records" class="records empty">No records to display.</div>
+          <button id="clearArchiveData" class="danger-button">Clear chat and extracted memory for this slot</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Backup and restore</h2>
+        <div class="button-row">
+          <button id="exportArchive">Export current archive</button>
+          <label class="file-button">Import as independent archive<input id="importFile" type="file" accept="application/json,.json"></label>
+        </div>
+        <label class="file-button html-import-button">Restore story from a “Read all” HTML file<input id="importHtmlFile" type="file" accept="text/html,.html,.htm"></label>
+        <p class="hint">JSON restores a complete archive; reading HTML restores the ordered raw story. Both create a new UUID and never silently overwrite an existing archive.</p>
+      </section>
+
+      <details class="card" id="apiSettings">
+        <summary>External memory model and global writing preferences</summary>
+        <p class="warning">When enabled, recent chat from the current slot is sent to your configured API provider. Slot UUID ownership remains local.</p>
+        <label class="check-row"><input id="autoExtractEnabled" type="checkbox">Extract memory automatically</label>
+        <div class="two-columns">
+          <label>Summarize after this many new entries<input id="triggerMessageCount" type="number" min="1" max="200" step="1"></label>
+          <label>Maximum entries per incremental batch<input id="recentMessageLimit" type="number" min="10" max="200" step="1"></label>
+        </div>
+        <p class="warning">Store only preferences that apply across roleplays here. Never place characters, relationships, events, or timelines in this field.</p>
+        <label for="writingPreferences">Writing preferences (one per line)</label>
+        <textarea id="writingPreferences" rows="6"></textarea>
+        <label for="baseUrl">Base URL</label>
+        <input id="baseUrl" type="url" placeholder="https://api.example.com/v1">
+        <label for="apiKey">API Key (stored locally only)</label>
+        <input id="apiKey" type="password" autocomplete="off">
+        <label for="modelName">Model Name</label>
+        <select id="modelName">
+          <option value="">Fetch the model list first</option>
+        </select>
+        <div class="button-row api-actions">
+          <button id="fetchModels">Fetch model list</button>
+          <button id="testConnection">Test connection</button>
+        </div>
+        <p id="apiStatus" class="hint">Recommended OpenRouter Base URL: https://openrouter.ai/api/v1</p>
+        <div class="two-columns">
+          <label>Temperature<input id="temperature" type="number" min="0" max="2" step="0.1"></label>
+          <label>Max Tokens<input id="maxTokens" type="number" min="1" step="1"></label>
+        </div>
+        <button id="saveSettings">Save global settings</button>
+      </details>
+
+      <div id="toast" role="status" aria-live="polite"></div>
+    </main>
+    <script src="../i18n/english-ui.js"></script>
+    <script src="side-panel.js" type="module"></script>
+  </body>
+</html>

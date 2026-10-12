@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Muah RP Memory Companion — English",
+  "version": "0.22.1",
+  "description": "A slot-isolated local chat archive and long-term memory companion for Muah AI Chatroom.",
+  "minimum_chrome_version": "114",
+  "permissions": ["sidePanel", "storage", "tabs", "scripting", "clipboardWrite"],
+  "host_permissions": [
+    "https://muah.ai/*",
+    "https://*.muah.ai/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Open Muah RP Memory Companion"
+  },
+  "side_panel": {
+    "default_path": "src/side-panel/side-panel.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://muah.ai/*", "https://*.muah.ai/*"],
+      "js": ["src/content/content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

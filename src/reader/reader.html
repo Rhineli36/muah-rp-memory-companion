@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Story Reader · Muah RP Memory Companion</title>
+    <link rel="stylesheet" href="reader.css">
+  </head>
+  <body>
+    <header class="reader-header">
+      <div class="title-block">
+        <p class="eyebrow">MUAH RP ARCHIVE</p>
+        <h1 id="storyTitle">Loading archive…</h1>
+        <p id="storyMeta" class="meta">—</p>
+      </div>
+      <div class="toolbar" aria-label="Reading tools">
+        <label class="search-box">
+          <span>Search</span>
+          <input id="searchInput" type="search" placeholder="Character, place, or dialogue" autocomplete="off">
+        </label>
+        <label>
+          <span>Font size</span>
+          <select id="fontSize">
+            <option value="16">Small</option>
+            <option value="18" selected>Medium</option>
+            <option value="21">Large</option>
+            <option value="24">Extra large</option>
+          </select>
+        </label>
+        <label>
+          <span>Reading width</span>
+          <select id="readingWidth">
+            <option value="760">Compact</option>
+            <option value="920" selected>Comfortable</option>
+            <option value="1120">Wide</option>
+          </select>
+        </label>
+        <button id="themeButton" type="button">Light</button>
+        <button id="printButton" type="button">Print / PDF</button>
+        <button id="exportHtml" type="button" class="primary">Export HTML</button>
+      </div>
+    </header>
+
+    <main id="reader" class="reader" aria-live="polite">
+      <section class="cover">
+        <p id="slotLabel" class="slot-label">Independent local archive</p>
+        <h2 id="coverTitle">Story archive</h2>
+        <p id="coverSummary">All raw chat entries are shown in saved order.</p>
+      </section>
+      <p id="resultStatus" class="result-status">Loading…</p>
+      <div id="story" class="story"></div>
+      <div id="emptyState" class="empty hidden">This slot has no readable chat records.</div>
+    </main>
+
+    <button id="backToTop" class="back-to-top" type="button" aria-label="Back to top">↑</button>
+    <script type="module" src="reader.js"></script>
+  </body>
+</html>
